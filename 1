@@ -1,0 +1,92 @@
+#include <stdio.h>
+#include <stdlib.h>
+#define _CRT_SECURE_NO_WARNINGS
+#define MAX_BODOVA 100.0
+#define BUFFER_SIZE 1024
+#define ERROR_OPENING_FILE -1
+
+typedef struct {
+    char ime[50];
+    char prezime[50];
+    int bodovi;
+} student;
+
+int count_rows(char* ime_datoteke);
+void procitaj_studente(FILE* fp, student* s, int n);
+void ispisi_studente(student* s, int n);
+
+int main() {
+    char filename[] = "datoteka.txt";
+    int n, i;
+    FILE* fp = NULL;
+    student* s;
+
+    
+    n = count_rows(filename);
+    if (n <= 0) {
+        printf("Error in files openig\n");
+        return ERROR_OPENING_FILE;
+    }
+
+    
+    s = (student*)malloc(n * sizeof(student));
+    if (s == NULL) {
+        printf("Greška u dinamičkoj alokaciji \n");
+        return 1;
+    }
+
+    
+    fp = fopen(filename, "r");
+    if (fp == NULL) {
+        printf("Greška pri otvaranju datoteke.\n");
+        free(s);
+        return ERROR_OPENING_FILE;
+    }
+
+    
+    procitaj_studente(fp, s, n);
+
+    fclose(fp);
+
+    ispisi_studente(s, n);
+
+    free(s);
+
+    return 0;
+}
+
+int count_rows(char* filename) {
+    char buffer[BUFFER_SIZE];
+    int brojac = 0;
+
+    FILE* fp = fopen(filename, "r");
+    if (fp == NULL) {
+        printf("Greška pri otvaranju datoteke.\n");
+        return ERROR_OPENING_FILE;
+    }
+
+   
+    while (fgets(buffer, BUFFER_SIZE, fp) != NULL) {
+        brojac++;
+    }
+
+    fclose(fp);
+    return brojac;
+}
+
+
+void procitaj_studente(FILE* fp, student* s, int n) {
+    int i;
+    for (i = 0; i < n; i++) {
+        fscanf(fp, "%s %s %d", s[i].ime, s[i].prezime, &s[i].bodovi);
+    }
+}
+
+
+void ispisi_studente(student* s, int n) {
+    int i;
+    for (i = 0; i < n; i++) {
+        float relativni_bodovi = (s[i].bodovi / MAX_BODOVA) * 100;
+        printf("%s %s - Apsolutni bodovi: %d, Relativni bodovi: %.2f%%\n", s[i].ime, s[i].prezime, s[i].bodovi, relativni_bodovi);
+    }
+}
