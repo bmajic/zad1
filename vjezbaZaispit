@@ -1,0 +1,158 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<time.h>
+#define MAX_LENGHT 32
+
+typedef struct Person* positionPerson;
+typedef struct Date* positionDate;
+
+
+struct Person
+{
+	char name[MAX_LENGHT];
+	char surname[MAX_LENGHT];
+	positionDate date;
+	positionPerson next;
+
+};
+
+struct Date
+{
+	int day;
+	int month;
+	int year;
+	positionDate next;
+};
+
+int readFromFile(positionPerson P);
+int addToListSorted(positionPerson p,char*ime,char* prezime,positionDate datum);
+positionDate generateDate();
+int printList(positionPerson p);
+int freeList(positionPerson p);
+int dateExistets(positionPerson p, positionDate d);
+
+int readFromFile(positionPerson p)
+{
+	FILE* fp = fopen("Osobe.txt", "r");
+	if (!fp)
+	{
+		printf("Erorr in file opening");
+		return -1;
+	}
+	char ime[MAX_LENGHT] = {};
+	char prezime[MAX_LENGHT] = {};
+
+	while (fscanf(fp, "%s %s",ime,prezime) == 2)
+	{
+		
+		positionDate datum = generateDate();
+		while (dateExistets(p, datum) == 1)
+		{
+			datum = generateDate();
+		}
+		addToListSorted(p,ime, prezime, datum);
+	}
+
+	return EXIT_SUCCESS;
+}
+
+int addToListSorted(positionPerson p, char* ime, char* prezime, positionDate datum)
+{
+	positionPerson newPerson = (positionPerson)malloc(sizeof(Person));
+	if (!newPerson)
+	{
+		printf("Erorr in malloc");
+		return -1;
+	}
+
+	strcpy(newPerson->name,ime);
+	strcpy(newPerson->surname, prezime);
+	newPerson->date = datum;
+
+	while (p->next != NULL && ((newPerson->date->year > p->next->date->year) || (newPerson->date->year == p->next->date->year && newPerson->date->month > p->next->date->month) || (newPerson->date->year == p->next->date->year && newPerson->date->month == p->next->date->month && newPerson->date->day > p->next->date->day)))
+	{
+		p = p->next;
+	}
+	
+
+	newPerson->next = p->next;
+	p->next = newPerson;
+
+	return EXIT_SUCCESS;
+}
+
+int printList(positionPerson p)
+{
+	positionPerson temp = p->next;
+	while (temp != NULL)
+	{
+		printf("%s %s: %d:%d:%d\n", temp->name, temp->surname, temp->date->day, temp->date->month, temp->date->year);
+			temp = temp->next;
+	}
+	return EXIT_SUCCESS;
+}
+
+int freeList(positionPerson p)
+{
+	positionPerson temp;
+	while (p != NULL)
+	{
+		temp = p;
+		p = p->next;
+		free(temp->date);
+		free(temp);
+	}
+	return EXIT_SUCCESS;
+}
+
+positionDate generateDate()
+{
+	positionDate datum = (positionDate)malloc(sizeof(Date));
+	if (!datum)
+	{
+		printf("erorr in malloc");
+		return 0;
+	}
+
+	datum->year = (rand() % 2 == 0) ? 2001 : 2021;
+	datum->month = rand() % 2 + 1;
+	if (datum->month == 1 ) {
+		datum->day = rand() % 31 + 1;
+	}
+
+
+	else if (datum->month == 2)
+	{
+		datum->day = rand() % 28 + 1;
+	}
+
+	return datum;
+}
+
+int dateExistets(positionPerson p, positionDate d)
+{
+	p = p->next;
+	while (p != NULL)
+	{
+		if (p->date->year == d->year && p->date->month == d->month && p->date->day == d->day)
+		{
+			return 1;
+		}
+		p = p->next;
+	}
+	return 0;
+}
+
+int main()
+{
+	srand(time(0));
+	Person P = { 0 };
+
+	readFromFile(&P);
+	printList(&P);
+
+	freeList(&P);
+	return 0;
+}
